@@ -19,14 +19,14 @@ def _get_client():
 def summarize_with_gemini(
     text: str,
     video_title: str,
-    model_name: str = "gemini-2.0-flash",
+    model_name: str = "gemini-2.5-flash",
     max_output_tokens: int = 1500,
 ) -> str:
     """
     调用 Google Gemini 对文本做总结。
     :param text: 原始文本（如字幕内容）
     :param video_title: 视频标题，用于上下文
-    :param model_name: 模型名，如 gemini-2.0-flash、gemini-1.5-pro
+    :param model_name: 模型名，如 gemini-2.5-flash、gemini-1.5-pro
     :param max_output_tokens: 总结最大输出 token 数
     """
     if not text or not text.strip():
@@ -66,7 +66,7 @@ def summarize_with_gemini(
 def summarize_video(
     video: VideoInfo,
     lang_prefer: list[str] | None = None,
-    model: str = "gemini-2.0-flash",
+    model: str = "gemini-2.5-flash",
 ) -> str:
     """
     获取视频字幕并生成 AI 总结。

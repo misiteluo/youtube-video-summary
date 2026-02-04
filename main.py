@@ -87,8 +87,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--model",
-        default=os.environ.get("GEMINI_MODEL", "gemini-2.0-flash"),
-        help="Gemini 模型名（默认 gemini-2.0-flash）",
+        default=os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
+        help="Gemini 模型名（默认 gemini-2.5-flash）",
     )
     args = parser.parse_args()
 

@@ -37,7 +37,7 @@ cp config.example.env .env
 | `SMTP_PORT` | 否 | 默认 465（SSL） |
 | `SMTP_USER` | 发邮件时必填 | 发件邮箱 |
 | `SMTP_PASSWORD` | 发邮件时必填 | 发件密码或授权码 |
-| `GEMINI_MODEL` | 否 | 默认 gemini-2.0-flash（也可用 gemini-1.5-pro） |
+| `GEMINI_MODEL` | 否 | 默认 gemini-2.5-flash（也可用 gemini-1.5-pro） |
 
 ## 使用示例
 
@@ -58,5 +58,5 @@ python main.py "https://www.youtube.com/channel/UCxxxx" --to-email me@example.co
 ## 注意事项
 
 - 视频需有字幕或自动生成字幕，否则会得到「无可用字幕」类提示。
-- Gemini API 有免费额度，可在 [Google AI Studio](https://aistudio.google.com/) 查看；`gemini-2.0-flash` 为新版默认模型。
+- Gemini API 有免费额度，可在 [Google AI Studio](https://aistudio.google.com/) 查看；`gemini-2.5-flash` 为新版默认模型。
 - 发件邮箱若为 QQ/163 等，需在邮箱设置中开启 SMTP 并使用授权码作为 `SMTP_PASSWORD`。

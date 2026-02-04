@@ -40,8 +40,8 @@ def fetch_channel_videos(
     """
     获取频道内视频列表。
     :param channel_url: 频道链接（或 /@xxx、/channel/xxx）
-    :param date_after: 起始日期 YYYYMMDD，例如 20250101
-    :param date_before: 结束日期 YYYYMMDD，例如 20250131
+    :param date_after: 起始日期 YYYYMMDD，例如 20250101（包含）
+    :param date_before: 结束日期 YYYYMMDD，例如 20250131（包含）
     :param max_videos: 最多获取数量
     :return: VideoInfo 列表
     """
@@ -52,11 +52,8 @@ def fetch_channel_videos(
         "extract_flat": True,
         "force_generic_extractor": False,
     }
-    # 日期筛选（yt-dlp 格式：YYYYMMDD）
-    if date_after:
-        opts["date_after"] = date_after
-    if date_before:
-        opts["date_before"] = date_before
+    # 注意：extract_flat 模式下 yt-dlp 的 dateafter/datebefore 不生效
+    # 需要在代码中手动过滤
 
     out: list[VideoInfo] = []
     seen = set()
@@ -79,6 +76,14 @@ def fetch_channel_videos(
             seen.add(vid)
             title = entry.get("title") or "无标题"
             upload_date = entry.get("upload_date") or ""
+            
+            # 手动进行日期过滤
+            if upload_date:
+                if date_after and upload_date < date_after:
+                    continue  # 跳过早于 date_after 的视频
+                if date_before and upload_date > date_before:
+                    continue  # 跳过晚于 date_before 的视频
+            
             duration = entry.get("duration")
             video_url = f"https://www.youtube.com/watch?v={vid}"
             out.append(
