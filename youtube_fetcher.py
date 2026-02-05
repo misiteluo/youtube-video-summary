@@ -31,6 +31,33 @@ def _normalize_channel_url(url: str) -> str:
     return url
 
 
+def _fetch_single_video_metadata(video_url: str, channel_name: str) -> dict | None:
+    """
+    仅拉取单个视频的元数据（不下载），用于获取 upload_date。
+    在 extract_flat 无法拿到日期时使用。
+    """
+    opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "skip_download": True,
+        "extract_flat": False,
+    }
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(video_url, download=False)
+        if not info:
+            return None
+        return {
+            "id": info.get("id"),
+            "title": info.get("title") or "无标题",
+            "upload_date": info.get("upload_date") or "",
+            "duration": info.get("duration"),
+            "channel": channel_name,
+        }
+    except Exception:
+        return None
+
+
 def fetch_channel_videos(
     channel_url: str,
     date_after: str | None = None,
@@ -52,8 +79,7 @@ def fetch_channel_videos(
         "extract_flat": True,
         "force_generic_extractor": False,
     }
-    # 注意：extract_flat 模式下 yt-dlp 的 dateafter/datebefore 不生效
-    # 需要在代码中手动过滤
+    # extract_flat 模式下 yt-dlp 不返回每条目的 upload_date，需在指定日期范围时单独拉取每条元数据
 
     out: list[VideoInfo] = []
     seen = set()
@@ -64,38 +90,53 @@ def fetch_channel_videos(
             return out
         entries = info.get("entries") or []
         channel_name = info.get("channel") or info.get("uploader") or "未知频道"
-        for entry in entries:
-            if len(out) >= max_videos:
-                break
-            if not entry:
+
+    need_date_filter = date_after is not None or date_before is not None
+    # 指定了日期范围时：flat 列表没有 upload_date，需逐个请求视频元数据再按日期过滤
+    max_candidates = 100 if need_date_filter else len(entries)
+
+    for entry in entries:
+        if len(out) >= max_videos:
+            break
+        if need_date_filter and max_candidates <= 0:
+            break
+        if not entry:
+            continue
+        vid = entry.get("id") or (entry.get("url") or "").split("?v=")[-1].split("&")[0]
+        if not vid or vid in seen or len(vid) != 11 or vid.startswith("UC"):
+            continue
+        seen.add(vid)
+        video_url = f"https://www.youtube.com/watch?v={vid}"
+
+        if need_date_filter:
+            max_candidates -= 1
+            meta = _fetch_single_video_metadata(video_url, channel_name)
+            if not meta:
                 continue
-            vid = entry.get("id") or entry.get("url", "").split("?v=")[-1].split("&")[0]
-            # 跳过非视频条目：视频 ID 为 11 位，频道 ID 以 UC 开头
-            if not vid or vid in seen or len(vid) != 11 or vid.startswith("UC"):
+            upload_date = meta.get("upload_date") or ""
+            if not upload_date:
                 continue
-            seen.add(vid)
+            if date_after and upload_date < date_after:
+                continue
+            if date_before and upload_date > date_before:
+                continue
+            title = meta["title"]
+            duration = meta["duration"]
+        else:
             title = entry.get("title") or "无标题"
             upload_date = entry.get("upload_date") or ""
-            
-            # 手动进行日期过滤
-            if upload_date:
-                if date_after and upload_date < date_after:
-                    continue  # 跳过早于 date_after 的视频
-                if date_before and upload_date > date_before:
-                    continue  # 跳过晚于 date_before 的视频
-            
             duration = entry.get("duration")
-            video_url = f"https://www.youtube.com/watch?v={vid}"
-            out.append(
-                VideoInfo(
-                    id=vid,
-                    title=title,
-                    url=video_url,
-                    upload_date=upload_date,
-                    duration=duration,
-                    channel=channel_name,
-                )
+
+        out.append(
+            VideoInfo(
+                id=vid,
+                title=title,
+                url=video_url,
+                upload_date=upload_date,
+                duration=duration,
+                channel=channel_name,
             )
+        )
     return out
 
 

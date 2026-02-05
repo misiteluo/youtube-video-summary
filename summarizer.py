@@ -20,7 +20,7 @@ def summarize_with_gemini(
     text: str,
     video_title: str,
     model_name: str = "gemini-2.5-flash",
-    max_output_tokens: int = 1500,
+    max_output_tokens: int = 8192,
 ) -> str:
     """
     调用 Google Gemini 对文本做总结。
@@ -44,7 +44,7 @@ def summarize_with_gemini(
 
 字幕/转录文本：
 ---
-{text[:12000]}
+{text[:500000]}
 ---
 请直接输出总结内容，不要重复标题或多余说明。"""
 
